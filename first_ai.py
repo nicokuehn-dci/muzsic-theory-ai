@@ -1128,7 +1128,6 @@ while True:
         console.print("1. Basic TTS (default)")
         if CLOUD_TTS_AVAILABLE:
             console.print("2. Cloud TTS (higher quality)")
-        
         choice = input("Select option (or press Enter for default): ")
         
         # Use the enhanced TTS function

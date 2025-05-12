@@ -116,6 +116,70 @@ The notation rendering works out of the box, but installing MuseScore will provi
 5. Use `voice output` to hear explanations
 6. `save session` to continue later or `save pdf` to export the learning material
 
+## Git Automation
+
+The project includes several scripts to automate Git operations:
+
+### Quick Push (`git_push.sh`)
+A simple script to quickly stage, commit, and push all changes to the remote repository.
+
+```bash
+# Make executable (first time only)
+chmod +x git_push.sh
+
+# Run the script
+./git_push.sh
+```
+
+The script will:
+1. Check for changes in the repository
+2. Prompt for a commit message (or use a default one with timestamp)
+3. Stage all changes
+4. Commit with the provided message
+5. Push to the remote repository (if configured)
+
+### Interactive Git Manager (`git_manager.sh`)
+A comprehensive interactive menu for managing Git operations.
+
+```bash
+# Make executable (first time only)
+chmod +x git_manager.sh
+
+# Run the script
+./git_manager.sh
+```
+
+Features:
+- Check repository status
+- View file changes (diff)
+- Stage, commit, and push changes
+- Pull from remote repository
+- Configure remote repository URL
+- View commit history
+- Create and switch branches
+- Full workflow automation (stage, commit, push)
+
+### Scheduled Automation (`scheduled_push.sh`)
+Designed for automated backups or continuous integration with no user interaction.
+
+```bash
+# Make executable (first time only)
+chmod +x scheduled_push.sh
+
+# Run the script manually
+./scheduled_push.sh
+
+# Or set up a cron job (example: every hour)
+# crontab -e
+# 0 * * * * /full/path/to/scheduled_push.sh
+```
+
+This script:
+- Automatically detects changes in the repository
+- Creates meaningful commit messages based on changed files
+- Logs all actions to `git_automation.log`
+- Can be run silently as a cron job
+
 ## Project Structure
 
 ```
