@@ -58,6 +58,190 @@ try:
 except ImportError:
     MUSIC_NOTATION_AVAILABLE = False
 
+# Function to check system audio capabilities
+def check_audio_system():
+    """Check the system's audio capabilities and report status."""
+    status = {
+        "tts_basic": False,
+        "tts_cloud": False,
+        "speech_recognition": False,
+        "microphone": False,
+        "best_voice_id": None
+    }
+    
+    # Check basic TTS
+    try:
+        import pyttsx3
+        engine = pyttsx3.init()
+        status["tts_basic"] = True
+        
+        # Find the best voice
+        voices = engine.getProperty('voices')
+        if voices:
+            # Prefer female voices as they often sound clearer
+            for voice in voices:
+                if "female" in voice.name.lower():
+                    status["best_voice_id"] = voice.id
+                    break
+            
+            # If no female voice found, use the first voice
+            if not status["best_voice_id"] and voices:
+                status["best_voice_id"] = voices[0].id
+                
+        # Clean up
+        del engine
+    except Exception:
+        status["tts_basic"] = False
+    
+    # Check cloud TTS
+    try:
+        import requests
+        from playsound import playsound
+        import tempfile
+        
+        # Just check if the modules are available, don't make actual requests
+        status["tts_cloud"] = True
+    except Exception:
+        status["tts_cloud"] = False
+    
+    # Check speech recognition
+    try:
+        import speech_recognition as sr
+        status["speech_recognition"] = True
+        
+        # Check for microphone
+        try:
+            recognizer = sr.Recognizer()
+            with sr.Microphone() as source:
+                recognizer.adjust_for_ambient_noise(source, duration=0.1)
+                status["microphone"] = True
+        except Exception:
+            status["microphone"] = False
+    except Exception:
+        status["speech_recognition"] = False
+    
+    return status
+
+# Function for enhanced text-to-speech
+def enhanced_tts(text, use_cloud=True, rate=150, volume=1.0):
+    """
+    Enhanced text-to-speech function with cloud and fallback options.
+    
+    Args:
+        text: Text to speak
+        use_cloud: Whether to attempt cloud TTS first
+        rate: Speech rate (words per minute)
+        volume: Volume level (0.0 to 1.0)
+    
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    if not VOICE_AVAILABLE:
+        console.print("[red]Voice capabilities not available.[/red]")
+        return False
+    
+    # Clean the text for better speech synthesis
+    # Remove markdown formatting, code blocks, etc.
+    clean_text = re.sub(r'```.*?```', 'code block', text, flags=re.DOTALL)
+    clean_text = re.sub(r'`.*?`', '', clean_text)
+    clean_text = re.sub(r'\*\*(.*?)\*\*', r'\1', clean_text)
+    clean_text = re.sub(r'\*(.*?)\*', r'\1', clean_text)
+    
+    # Try cloud TTS if requested and available
+    if use_cloud and CLOUD_TTS_AVAILABLE:
+        console.print("[yellow]Using cloud TTS...[/yellow]")
+        
+        try:
+            # Maximum length per request
+            MAX_LENGTH = 200
+            # Split text into sentences for more natural breaks
+            import re
+            sentences = re.split(r'(?<=[.!?])\s+', clean_text)
+            
+            # Group sentences into chunks under MAX_LENGTH
+            chunks = []
+            current_chunk = ""
+            
+            for sentence in sentences:
+                if len(current_chunk) + len(sentence) <= MAX_LENGTH:
+                    current_chunk += sentence + " "
+                else:
+                    if current_chunk:
+                        chunks.append(current_chunk.strip())
+                    current_chunk = sentence + " "
+            
+            if current_chunk:
+                chunks.append(current_chunk.strip())
+            
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("[bold blue]Generating speech..."),
+                BarColumn(),
+                TimeElapsedColumn()
+            ) as progress:
+                task = progress.add_task("[green]Processing...", total=len(chunks))
+                
+                for i, chunk in enumerate(chunks):
+                    # Google Translate TTS API - no API key required
+                    tts_url = f"https://translate.google.com/translate_tts"
+                    params = {
+                        "ie": "UTF-8",
+                        "q": chunk,
+                        "tl": "en",
+                        "client": "tw-ob"
+                    }
+                    
+                    response = requests.get(tts_url, params=params)
+                    
+                    if response.status_code == 200:
+                        # Create temp file for the audio
+                        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as f:
+                            f.write(response.content)
+                            audio_file = f.name
+                        
+                        # Play the audio
+                        playsound(audio_file)
+                        
+                        # Clean up the temp file
+                        try:
+                            os.remove(audio_file)
+                        except:
+                            pass
+                    
+                    progress.update(task, advance=1)
+            
+            return True
+                
+        except Exception as e:
+            console.print(f"[bold red]Error with cloud TTS:[/bold red] {e}")
+            console.print("[yellow]Falling back to basic TTS...[/yellow]")
+    
+    # Use basic TTS as fallback
+    try:
+        console.print("[yellow]Using basic TTS...[/yellow]")
+        engine = pyttsx3.init()
+        
+        # Try to use a better voice if available
+        voices = engine.getProperty('voices')
+        if len(voices) > 1:  # If multiple voices are available
+            # Try to find a female voice which is often clearer
+            for voice in voices:
+                if "female" in voice.name.lower():
+                    engine.setProperty('voice', voice.id)
+                    break
+        
+        # Adjust rate for better clarity
+        engine.setProperty('rate', rate)
+        engine.setProperty('volume', volume)
+        
+        engine.say(clean_text)
+        engine.runAndWait()
+        return True
+    
+    except Exception as e:
+        console.print(f"[bold red]Error with basic TTS:[/bold red] {e}")
+        return False
+
 # Function to load system prompts from JSON file
 def load_system_prompts():
     try:
@@ -865,24 +1049,74 @@ while True:
     elif VOICE_AVAILABLE and user_message.lower() == 'voice input':
         console.print("[yellow]Listening... (speak now)[/yellow]")
         recognizer = sr.Recognizer()
-        with sr.Microphone() as source:
-            recognizer.adjust_for_ambient_noise(source)
+        
+        # Set up retry mechanism
+        max_retries = 2
+        retry_count = 0
+        
+        while retry_count <= max_retries:
             try:
-                audio = recognizer.listen(source, timeout=5)
-                console.print("[yellow]Processing speech...[/yellow]")
-                speech_text = recognizer.recognize_google(audio)
-                console.print(f"[green]You said:[/green] {speech_text}")
-                # Use the recognized text as the user message
-                user_message = speech_text
-                # Continue with normal message processing (don't use continue here)
+                with sr.Microphone() as source:
+                    # Adjust recognition parameters for better results
+                    recognizer.adjust_for_ambient_noise(source, duration=0.5)
+                    recognizer.energy_threshold = 300  # Increase energy threshold for better detection
+                    recognizer.dynamic_energy_threshold = True
+                    
+                    console.print("[yellow]Listening... (speak now)[/yellow]")
+                    audio = recognizer.listen(source, timeout=5, phrase_time_limit=10)
+                    
+                    console.print("[yellow]Processing speech...[/yellow]")
+                    # Try Google's service first as it's generally more accurate
+                    try:
+                        speech_text = recognizer.recognize_google(audio)
+                    except:
+                        # Fall back to local recognition if Google service fails
+                        speech_text = recognizer.recognize_sphinx(audio) if hasattr(recognizer, 'recognize_sphinx') else ""
+                        
+                    if speech_text:
+                        console.print(f"[green]You said:[/green] {speech_text}")
+                        # Use the recognized text as the user message
+                        user_message = speech_text
+                        # Continue with normal message processing (don't use continue here)
+                        break
+                    else:
+                        raise sr.UnknownValueError("Empty recognition result")
+                        
             except sr.WaitTimeoutError:
-                console.print("[red]No speech detected. Try again.[/red]")
-                continue
+                retry_count += 1
+                if retry_count <= max_retries:
+                    console.print(f"[yellow]No speech detected. Retry {retry_count}/{max_retries}...[/yellow]")
+                else:
+                    console.print("[red]No speech detected after multiple tries. Please try again later.[/red]")
+                    continue
             except sr.UnknownValueError:
-                console.print("[red]Could not understand audio. Try again.[/red]")
-                continue
-            except sr.RequestError:
-                console.print("[red]Could not request results from speech recognition service.[/red]")
+                retry_count += 1
+                if retry_count <= max_retries:
+                    console.print(f"[yellow]Could not understand audio. Retry {retry_count}/{max_retries}...[/yellow]")
+                else:
+                    console.print("[red]Could not understand audio after multiple tries.[/red]")
+                    console.print("[yellow]Tip: Speak clearly and ensure your microphone is working properly.[/yellow]")
+                    continue
+            except sr.RequestError as e:
+                console.print(f"[red]Could not request results from speech recognition service: {e}[/red]")
+                console.print("[yellow]Trying offline recognition if available...[/yellow]")
+                try:
+                    # Try offline recognition if possible
+                    if hasattr(recognizer, 'recognize_sphinx'):
+                        with sr.Microphone() as source:
+                            audio = recognizer.listen(source, timeout=5)
+                            speech_text = recognizer.recognize_sphinx(audio)
+                            console.print(f"[green]You said (offline recognition):[/green] {speech_text}")
+                            user_message = speech_text
+                            break
+                    else:
+                        console.print("[red]Offline recognition not available. Try again later.[/red]")
+                        continue
+                except Exception:
+                    console.print("[red]Offline recognition failed. Please try again.[/red]")
+                    continue
+            except Exception as e:
+                console.print(f"[red]An error occurred: {str(e)}[/red]")
                 continue
     elif VOICE_AVAILABLE and user_message.lower() == 'voice output':
         if len(conversation) < 2 or conversation[-1]["role"] != "assistant":
@@ -895,78 +1129,19 @@ while True:
         if CLOUD_TTS_AVAILABLE:
             console.print("2. Cloud TTS (higher quality)")
         
-        choice = input("Select option: ")
+        choice = input("Select option (or press Enter for default): ")
         
-        if choice == "2" and CLOUD_TTS_AVAILABLE:
-            # Use cloud-based TTS
-            console.print("[yellow]Using cloud TTS...[/yellow]")
-            
-            try:
-                # Maximum length per request
-                MAX_LENGTH = 200
-                chunks = [last_response[i:i+MAX_LENGTH] for i in range(0, len(last_response), MAX_LENGTH)]
-                
-                with Progress(
-                    SpinnerColumn(),
-                    TextColumn("[bold blue]Generating speech..."),
-                    BarColumn(),
-                    TimeElapsedColumn()
-                ) as progress:
-                    task = progress.add_task("[green]Processing...", total=len(chunks))
-                    
-                    for i, chunk in enumerate(chunks):
-                        # Google Translate TTS API - no API key required
-                        tts_url = f"https://translate.google.com/translate_tts"
-                        params = {
-                            "ie": "UTF-8",
-                            "q": chunk,
-                            "tl": "en",
-                            "client": "tw-ob"
-                        }
-                        
-                        response = requests.get(tts_url, params=params)
-                        
-                        if response.status_code == 200:
-                            # Create temp file for the audio
-                            with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as f:
-                                f.write(response.content)
-                                audio_file = f.name
-                            
-                            # Play the audio
-                            playsound(audio_file)
-                            
-                            # Clean up the temp file
-                            try:
-                                os.remove(audio_file)
-                            except:
-                                pass
-                        
-                        progress.update(task, advance=1)
-            
-            except Exception as e:
-                console.print(f"[bold red]Error with cloud TTS:[/bold red] {e}")
-                console.print("[yellow]Falling back to basic TTS...[/yellow]")
-                engine = pyttsx3.init()
-                engine.say(last_response)
-                engine.runAndWait()
-        else:
-            # Use basic TTS
-            console.print("[yellow]Using basic TTS...[/yellow]")
-            engine = pyttsx3.init()
-            
-            # Try to use a better voice if available
-            voices = engine.getProperty('voices')
-            if len(voices) > 1:  # If multiple voices are available
-                # Try to find a female voice which is often clearer
-                for voice in voices:
-                    if "female" in voice.name.lower():
-                        engine.setProperty('voice', voice.id)
-                        break
-            
-            # Adjust rate for better clarity
-            engine.setProperty('rate', 150)
-            engine.say(last_response)
-            engine.runAndWait()
+        # Use the enhanced TTS function
+        use_cloud = choice == "2" and CLOUD_TTS_AVAILABLE
+        
+        # Get current settings or use defaults
+        rate = getattr(engine, "rate", 150) if "engine" in locals() else 150
+        volume = getattr(engine, "volume", 1.0) if "engine" in locals() else 1.0
+        
+        success = enhanced_tts(last_response, use_cloud=use_cloud, rate=rate, volume=volume)
+        
+        if not success:
+            console.print("[red]Failed to use text-to-speech. Please check your audio settings.[/red]")
         continue
     
     # Add user message to conversation
