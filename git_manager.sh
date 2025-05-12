@@ -81,9 +81,34 @@ commit_changes() {
 push_to_remote() {
     # Check if a remote is configured
     if git remote -v | grep -q "origin"; then
-        echo -e "\n🚀 Pushing changes to remote repository..."
+        echo -e "\n🚀 Push options:"
+        echo "1. Push current branch ($(git branch --show-current)) only"
+        echo "2. Push all branches (--all)"
+        echo "3. Push current branch and tags (--tags)"
+        echo "4. Push all branches and tags (--all --tags)"
+        echo -n "Select option: "
+        read push_option
+        
         echo "   (Enter your credentials if prompted)"
-        git push origin $(git branch --show-current)
+        
+        case $push_option in
+            2)
+                echo "Pushing all branches to remote repository..."
+                git push --all origin
+                ;;
+            3)
+                echo "Pushing current branch and tags to remote repository..."
+                git push --tags origin $(git branch --show-current)
+                ;;
+            4)
+                echo "Pushing all branches and tags to remote repository..."
+                git push --all --tags origin
+                ;;
+            *)
+                echo "Pushing current branch to remote repository..."
+                git push origin $(git branch --show-current)
+                ;;
+        esac
         
         # Check push status
         if [ $? -eq 0 ]; then

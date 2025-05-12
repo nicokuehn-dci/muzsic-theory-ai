@@ -53,10 +53,27 @@ git commit -m "$commit_msg"
 
 # Check if a remote is configured
 if git remote -v | grep -q "origin"; then
-    # Push changes
+    # Get current branch
+    CURRENT_BRANCH=$(git branch --show-current)
+    
+    # Ask if user wants to push all branches or just the current one
+    echo -e "\n🔄 Push options:"
+    echo "1. Push current branch ($CURRENT_BRANCH) only"
+    echo "2. Push all branches (--all)"
+    echo -n "Select option (default: 1): "
+    read push_option
+    
+    # Push changes based on selection
     echo "🚀 Pushing changes to remote repository..."
     echo "   (Enter your credentials if prompted)"
-    git push origin master
+    
+    if [ "$push_option" = "2" ]; then
+        # Push all branches
+        git push --all origin
+    else
+        # Push current branch only
+        git push origin "$CURRENT_BRANCH"
+    fi
 
     # Check push status
     if [ $? -eq 0 ]; then

@@ -136,7 +136,10 @@ The script will:
 2. Prompt for a commit message (or use a default one with timestamp)
 3. Stage all changes
 4. Commit with the provided message
-5. Push to the remote repository (if configured)
+5. Prompt for push options:
+   - Push current branch only
+   - Push all branches with `--all` option
+6. Push to the remote repository (if configured)
 
 ### Interactive Git Manager (`git_manager.sh`)
 A comprehensive interactive menu for managing Git operations.
@@ -166,18 +169,28 @@ Designed for automated backups or continuous integration with no user interactio
 # Make executable (first time only)
 chmod +x scheduled_push.sh
 
-# Run the script manually
+# Run the script manually with default settings (push current branch)
 ./scheduled_push.sh
 
-# Or set up a cron job (example: every hour)
+# Run with environment variable to push all branches
+GIT_PUSH_MODE=all ./scheduled_push.sh
+
+# Run with environment variable to push all branches and tags
+GIT_PUSH_MODE=all-tags ./scheduled_push.sh
+
+# Or set up a cron job (example: every hour, pushing all branches)
 # crontab -e
-# 0 * * * * /full/path/to/scheduled_push.sh
+# 0 * * * * GIT_PUSH_MODE=all /full/path/to/scheduled_push.sh
 ```
 
 This script:
 - Automatically detects changes in the repository
 - Creates meaningful commit messages based on changed files
 - Logs all actions to `git_automation.log`
+- Supports different push modes via environment variable:
+  - `current` (default): Push only the current branch
+  - `all`: Push all branches with `--all` option
+  - `all-tags`: Push all branches and tags with `--all --tags`
 - Can be run silently as a cron job
 
 ## Project Structure

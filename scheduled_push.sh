@@ -53,12 +53,33 @@ git commit -m "$COMMIT_MSG"
 # Check if a remote is configured
 if git remote -v | grep -q "origin"; then
     # Push changes
-    log_message "Pushing changes to remote repository"
-    if git push origin $(git branch --show-current); then
-        log_message "Successfully pushed changes to remote repository"
+    # Check for environment variable to determine push mode
+    PUSH_MODE="${GIT_PUSH_MODE:-current}"  # Default to current branch if not specified
+    
+    if [ "$PUSH_MODE" = "all" ]; then
+        log_message "Pushing all branches to remote repository"
+        if git push --all origin; then
+            log_message "Successfully pushed all branches to remote repository"
+        else
+            log_message "Failed to push changes to remote repository"
+            exit 1
+        fi
+    elif [ "$PUSH_MODE" = "all-tags" ]; then
+        log_message "Pushing all branches and tags to remote repository"
+        if git push --all --tags origin; then
+            log_message "Successfully pushed all branches and tags to remote repository"
+        else
+            log_message "Failed to push changes to remote repository"
+            exit 1
+        fi
     else
-        log_message "Failed to push changes to remote repository"
-        exit 1
+        log_message "Pushing current branch to remote repository"
+        if git push origin $(git branch --show-current); then
+            log_message "Successfully pushed current branch to remote repository"
+        else
+            log_message "Failed to push changes to remote repository"
+            exit 1
+        fi
     fi
 else
     log_message "No remote repository configured. Changes committed locally only."

@@ -2,23 +2,77 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# Environment variables
+# Environment variables and secrets
 .env
+.env.local
+.env.development
+.env.test
+.env.production
+*.env
+.flaskenv
+credentials.json
 
 # Saved conversations and sessions (user data)
 saved_chats/
 saved_sessions/
+git_automation.log
 
 # Virtual environment (if you use one)
 venv/
 env/
 .venv/
+ENV/
+env.bak/
+venv.bak/
+pythonenv*
 
 # IDE files
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+*.sublime-workspace
+*.sublime-project
+.spyderproject
+.spyproject
+.ropeproject
 
 # System files
 .DS_Store
 Thumbs.db
+*.bak
+*.tmp
+*~
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+
+# Logs and databases
+*.log
+*.sql
+*.sqlite
+*.db
