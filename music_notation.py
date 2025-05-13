@@ -31,10 +31,15 @@ def render_abc_notation(abc_notation, output_dir=None):
     """
     try:
         if output_dir is None:
-            # Use the saved_chats folder
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            output_dir = os.path.join(current_dir, "saved_chats")
-            os.makedirs(output_dir, exist_ok=True)
+            # Check if we have path_config available
+            try:
+                from path_config import get_directories
+                output_dir, _ = get_directories()
+            except ImportError:
+                # Fallback to local directory
+                current_dir = os.path.dirname(os.path.abspath(__file__))
+                output_dir = os.path.join(current_dir, "saved_chats")
+                os.makedirs(output_dir, exist_ok=True)
         
         # Create a temporary file for the ABC notation
         with tempfile.NamedTemporaryFile(mode='w', suffix='.abc', delete=False) as temp_abc:

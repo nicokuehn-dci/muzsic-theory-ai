@@ -15,6 +15,19 @@ from rich.panel import Panel
 from rich.table import Table
 from rich import box
 from rich.markdown import Markdown
+from pathlib import Path
+
+# Import API configuration
+try:
+    from api_config import get_api_key
+except ImportError:
+    get_api_key = None
+    
+# Import path configuration
+try:
+    from path_config import get_directories
+except ImportError:
+    get_directories = None
 # Import topic manager for system prompts
 try:
     from topic_manager import change_topic
@@ -295,11 +308,21 @@ load_dotenv()
 
 # Check if API key is available
 api_key = os.getenv("GROQ_API_KEY")
-if not api_key:
-    console.print("[bold red]Error:[/bold red] GROQ_API_KEY not found in environment variables.")
-    exit()
 
-client = groq.Client()
+# If api_key not found in environment variables, try our custom API key management
+if not api_key and get_api_key:
+    api_key = get_api_key()
+
+# Final check if we have an API key
+if not api_key:
+    console.print("[bold red]Error:[/bold red] GROQ_API_KEY not found.")
+    console.print("Please set your API key using one of the following methods:")
+    console.print("1. Create a .env file with GROQ_API_KEY=your_api_key")
+    console.print("2. Set an environment variable: export GROQ_API_KEY=your_api_key")
+    console.print("3. Run music-theory-ai-config (if installed as a Debian package)")
+    exit(1)
+
+client = groq.Client(api_key=api_key)
 # Setting up the conversation
 current_topic = get_current_prompt_type()  # Get current topic from prompt manager
 conversation = [
@@ -440,11 +463,15 @@ def format_with_clickable_links(text):
 def save_to_txt(conversation_history, filename=None):
     try:
         if filename is None:
-            # Use absolute path to ensure we know where the file is saved
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            # Create the saved_chats directory if it doesn't exist
-            save_dir = os.path.join(current_dir, "saved_chats")
-            os.makedirs(save_dir, exist_ok=True)
+            # Get the appropriate directory for saved chats
+            if get_directories:
+                save_dir, _ = get_directories()
+            else:
+                # Fallback to local directory
+                current_dir = os.path.dirname(os.path.abspath(__file__))
+                save_dir = os.path.join(current_dir, "saved_chats")
+                os.makedirs(save_dir, exist_ok=True)
+                
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = os.path.join(save_dir, f"music_theory_chat_{timestamp}.txt")
         
@@ -508,10 +535,14 @@ def save_to_pdf(conversation_history, filename=None):
     
     try:
         if filename is None:
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            # Create the saved_chats directory if it doesn't exist
-            save_dir = os.path.join(current_dir, "saved_chats")
-            os.makedirs(save_dir, exist_ok=True)
+            # Get the appropriate directory for saved chats
+            if get_directories:
+                save_dir, _ = get_directories()
+            else:
+                # Fallback to local directory
+                current_dir = os.path.dirname(os.path.abspath(__file__))
+                save_dir = os.path.join(current_dir, "saved_chats")
+                os.makedirs(save_dir, exist_ok=True)
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = os.path.join(save_dir, f"music_theory_chat_{timestamp}.pdf")
         
@@ -588,10 +619,14 @@ def save_to_pdf(conversation_history, filename=None):
 def save_session(conversation_history, filename=None):
     try:
         if filename is None:
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            # Create the saved_sessions directory if it doesn't exist
-            save_dir = os.path.join(current_dir, "saved_sessions")
-            os.makedirs(save_dir, exist_ok=True)
+            # Get the appropriate directory for saved sessions
+            if get_directories:
+                _, save_dir = get_directories()
+            else:
+                # Fallback to local directory
+                current_dir = os.path.dirname(os.path.abspath(__file__))
+                save_dir = os.path.join(current_dir, "saved_sessions")
+                os.makedirs(save_dir, exist_ok=True)
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = os.path.join(save_dir, f"session_{timestamp}.json")
         
@@ -628,9 +663,13 @@ def save_session(conversation_history, filename=None):
 def load_session(filename=None):
     try:
         if filename is None:
-            # List available sessions
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            sessions_dir = os.path.join(current_dir, "saved_sessions")
+            # Get the appropriate directory for saved sessions
+            if get_directories:
+                _, sessions_dir = get_directories()
+            else:
+                # Fallback to local directory
+                current_dir = os.path.dirname(os.path.abspath(__file__))
+                sessions_dir = os.path.join(current_dir, "saved_sessions")
             
             if not os.path.exists(sessions_dir):
                 console.print("[yellow]No saved sessions found.[/yellow]")
@@ -695,10 +734,14 @@ def load_session(filename=None):
 def save_to_docx(conversation_history, filename=None):
     try:
         if filename is None:
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            # Create the saved_chats directory if it doesn't exist
-            save_dir = os.path.join(current_dir, "saved_chats")
-            os.makedirs(save_dir, exist_ok=True)
+            # Get the appropriate directory for saved chats
+            if get_directories:
+                save_dir, _ = get_directories()
+            else:
+                # Fallback to local directory
+                current_dir = os.path.dirname(os.path.abspath(__file__))
+                save_dir = os.path.join(current_dir, "saved_chats")
+                os.makedirs(save_dir, exist_ok=True)
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = os.path.join(save_dir, f"music_theory_chat_{timestamp}.docx")
         

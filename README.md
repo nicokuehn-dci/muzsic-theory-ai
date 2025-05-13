@@ -237,3 +237,56 @@ chmod +x first_ai.py
 # Or using Python
 python3 first_ai.py
 ```
+
+## 📦 Debian Installation
+
+For Debian, Ubuntu, and compatible distributions, you can install Music Theory AI Assistant using the Debian package:
+
+### Building the Package
+
+If you want to build the Debian package yourself:
+
+```bash
+# Make scripts executable
+chmod +x build_deb_package.sh build_package.sh
+
+# Build the package
+./build_package.sh
+```
+
+The resulting .deb file will be in the project root directory.
+
+### Option 1: Direct Installation
+```bash
+# Download the .deb package
+wget https://github.com/nico-kuehn-dci/music-theory-ai/releases/download/v1.0.0/music-theory-ai_1.0.0_all.deb
+
+# Install the package
+sudo apt install ./music-theory-ai_1.0.0_all.deb
+```
+
+### Option 2: Using APT Repository
+```bash
+# Add the repository key
+curl -s https://raw.githubusercontent.com/nico-kuehn-dci/music-theory-ai/main/KEY.gpg | sudo apt-key add -
+
+# Add the repository
+echo "deb [arch=all] https://github.com/nico-kuehn-dci/music-theory-ai/releases/download/apt-repo ./" | \
+    sudo tee /etc/apt/sources.list.d/music-theory-ai.list
+
+# Update and install
+sudo apt update
+sudo apt install music-theory-ai
+```
+
+### First Run Configuration
+When you first install the package, you'll be prompted to enter your Groq API key. If you skip this step during installation, you can configure it later by running:
+
+```bash
+music-theory-ai-config
+```
+
+After installation, you can launch the application from your application menu or by running:
+```bash
+music-theory-ai
+```
