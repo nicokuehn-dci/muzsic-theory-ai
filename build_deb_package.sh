@@ -28,7 +28,7 @@ echo "MIT License" > music-theory-ai/usr/share/doc/music-theory-ai/LICENSE
 # Control-Datei für Debian-Paket
 cat > music-theory-ai/DEBIAN/control << EOL
 Package: music-theory-ai
-Version: 1.0.0
+Version: 1.0.3
 Section: education
 Priority: optional
 Architecture: all

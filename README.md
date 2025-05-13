@@ -1,7 +1,7 @@
 # Music Theory AI Chat Assistant
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
-![Python](https://img.shields.io/badge/python-3.8%2B-green)
+![Version](https://img.shields.io/badge/version-1.0.3-blue)
+![Python](https://img.shields.io/badge/python-3.8--3.13-green)
 ![License](https://img.shields.io/badge/license-MIT-brightgreen)
 
 A sophisticated command-line chat application designed for interactive music theory education, powered by the Groq AI API. This application combines natural language processing with music notation rendering and voice interaction capabilities to create an engaging and educational experience.
@@ -35,12 +35,14 @@ The Music Theory AI Chat Assistant serves as a virtual music theory tutor, capab
 
 ## 🛠 Technical Requirements
 
-- **Python**: 3.8 or higher
+- **Python**: 3.8 to 3.13 (fully tested and compatible)
 - **Groq API**: Valid API key (set as environment variable or in `.env` file)
 - **Optional Software**:
   - MuseScore (for enhanced music notation quality)
   - System audio support for voice features
-- **Required Packages**: All dependencies are managed in `requirements.txt`
+- **Required System Packages** (for Debian-based systems):
+  - `python3-pip`, `python3-venv`, `portaudio19-dev`, `python3-pyaudio`
+- **Required Python Packages**: All dependencies are managed in `requirements.txt`
 
 ## 🚀 Quick Start Guide
 
