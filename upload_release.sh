@@ -6,11 +6,17 @@ GITHUB_USER="nicokuehn-dci"
 REPO="muzsic-theory-ai"
 
 echo "Bereite Release v$VERSION für den Upload vor..."
-echo "Stellen Sie sicher, dass Sie ein GitHub Personal Access Token mit den folgenden Berechtigungen haben:"
-echo "- 'repo' (vollständiger Zugriff auf Repositories)"
-echo "- 'write:packages' (für Paket-Uploads)"
-echo "Sie können eines erstellen unter: https://github.com/settings/tokens/new"
-echo "Hinweis: Wählen Sie mindestens 'repo' und 'write:packages' Berechtigungen!"
+echo "===== WICHTIG: GitHub Token-Berechtigungen ====="
+echo "1. Gehen Sie zu: https://github.com/settings/tokens/new"
+echo "2. Geben Sie einen Namen ein (z.B. 'Music Theory AI Release')"
+echo "3. Wählen Sie folgende Berechtigungen:"
+echo "   - [x] repo (alle Checkboxen darunter)"
+echo "   - [x] workflow"  
+echo "   - [x] write:packages"
+echo "   - [x] delete:packages"
+echo "   - [x] admin:org (nur wenn Sie in einer Organisation sind)"
+echo "4. Generieren Sie den Token und kopieren Sie ihn"
+echo "================================================"
 echo
 
 # Check if token is provided via environment variable
