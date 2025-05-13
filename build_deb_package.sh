@@ -83,11 +83,25 @@ echo "Aktiviere virtuelle Umgebung und installiere Abhängigkeiten..."
 if [ -f venv/bin/activate ]; then
     source venv/bin/activate
     pip install --upgrade pip
-    pip install -r requirements.txt
-    # Überprüfen, ob die Installation erfolgreich war
-    if [ $? -ne 0 ]; then
+    
+    # Installiere playsound separat mit einer bekannten funktionierenden Version
+    echo "Installiere playsound 1.2.2 (stabile Version)..."
+    pip install playsound==1.2.2
+    
+    # Installiere die übrigen Abhängigkeiten
+    echo "Installiere übrige Abhängigkeiten..."
+    # Versuche Installation mit Fehlerbehandlung
+    if ! pip install -r requirements.txt; then
         echo "WARNUNG: Einige Abhängigkeiten konnten nicht installiert werden."
-        echo "Sie können die Installation manuell durchführen mit:"
+        echo "Versuche alternative Installation der problematischen Pakete..."
+        
+        # Problematische Pakete einzeln installieren
+        pip install groq python-dotenv fpdf python-docx rich pyttsx3 SpeechRecognition requests
+        
+        # Direkte Installation von PyAudio über apt
+        apt-get install -y python3-pyaudio
+        
+        echo "Sie können fehlende Pakete auch manuell nachinstallieren mit:"
         echo "cd /usr/local/bin/music-theory-ai && source venv/bin/activate && pip install -r requirements.txt"
     fi
 else
@@ -208,28 +222,62 @@ mkdir -p "\$HOME/.music-theory-ai/saved_sessions"
 # Starte die Anwendung
 cd /usr/local/bin/music-theory-ai
 
+# Installiere fehlende Pakete falls nötig
+ensure_dependencies() {
+    echo "Stelle sicher, dass alle notwendigen Abhängigkeiten installiert sind..."
+    
+    # Installiere grundlegende Abhängigkeiten
+    pip3 install --user groq python-dotenv rich
+    
+    # Playsound in einer funktionierenden Version
+    pip3 install --user playsound==1.2.2
+    
+    # Prüfe, ob pyaudio installiert ist
+    python3 -c "import pyaudio" 2>/dev/null || {
+        echo "Installiere PyAudio..."
+        sudo apt-get update && sudo apt-get install -y python3-pyaudio
+    }
+}
+
 # Prüfe, ob virtuelle Umgebung existiert und aktivierbar ist
 if [ -f venv/bin/activate ]; then
     echo "Aktiviere virtuelle Python-Umgebung..."
     source venv/bin/activate
     echo "Starte Music Theory AI Assistant..."
-    python3 first_ai.py "\$@"
+    python3 first_ai.py "\$@" || {
+        echo "Fehler beim Starten der Anwendung in der virtuellen Umgebung."
+        echo "Versuche Installation fehlender Abhängigkeiten..."
+        ensure_dependencies
+        echo "Versuche erneut mit system-weitem Python..."
+        python3 first_ai.py "\$@"
+    }
 else
     echo "Warnung: Virtuelle Python-Umgebung nicht gefunden."
     echo "Versuche, die Anwendung mit system-weitem Python zu starten..."
+    
+    # Stelle sicher dass Abhängigkeiten installiert sind
+    ensure_dependencies
+    
+    # Starte die Anwendung
     python3 first_ai.py "\$@"
     
     # Falls das fehlschlägt, gib Hilfestellung
     if [ $? -ne 0 ]; then
         echo
         echo "FEHLER: Die Anwendung konnte nicht gestartet werden."
-        echo "Bitte stellen Sie sicher, dass alle erforderlichen Python-Module installiert sind:"
-        echo "sudo pip3 install -r /usr/local/bin/music-theory-ai/requirements.txt"
+        echo "Bitte führen Sie folgende Befehle aus, um die Probleme zu beheben:"
         echo
-        echo "Oder reparieren Sie die virtuelle Umgebung mit:"
-        echo "sudo rm -rf /usr/local/bin/music-theory-ai/venv"
-        echo "cd /usr/local/bin/music-theory-ai && sudo python3 -m venv venv"
-        echo "cd /usr/local/bin/music-theory-ai && sudo -H venv/bin/pip install -r requirements.txt"
+        echo "1. System-Pakete installieren:"
+        echo "   sudo apt install python3-pip python3-venv portaudio19-dev python3-pyaudio"
+        echo
+        echo "2. Python-Pakete installieren:"
+        echo "   pip3 install --user groq python-dotenv rich playsound==1.2.2"
+        echo
+        echo "3. Virtuelle Umgebung reparieren (optional):"
+        echo "   sudo rm -rf /usr/local/bin/music-theory-ai/venv"
+        echo "   cd /usr/local/bin/music-theory-ai && sudo python3 -m venv venv"
+        echo "   cd /usr/local/bin/music-theory-ai && sudo -H venv/bin/pip install playsound==1.2.2"
+        echo "   cd /usr/local/bin/music-theory-ai && sudo -H venv/bin/pip install -r requirements.txt"
     fi
 fi
 EOSCRIPT
