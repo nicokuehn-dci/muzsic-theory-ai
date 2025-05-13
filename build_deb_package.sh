@@ -62,9 +62,39 @@ mkdir -p /etc/music-theory-ai
 # Python-Abhängigkeiten installieren
 echo "Installation der Python-Abhängigkeiten..."
 cd /usr/local/bin/music-theory-ai
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+
+# Prüfe, ob python3-venv installiert ist
+if ! dpkg -l python3-venv &> /dev/null; then
+    echo "Das python3-venv Paket ist nicht installiert. Installiere es jetzt..."
+    apt-get update
+    apt-get install -y python3-venv
+fi
+
+# Versuche, eine virtuelle Umgebung zu erstellen
+echo "Erstelle Python virtuelle Umgebung..."
+if ! python3 -m venv venv; then
+    echo "Fehler beim Erstellen der virtuellen Umgebung."
+    echo "Versuche mit expliziten Berechtigungen..."
+    python3 -m venv venv --system-site-packages
+fi
+
+# Aktiviere die virtuelle Umgebung und installiere Abhängigkeiten
+echo "Aktiviere virtuelle Umgebung und installiere Abhängigkeiten..."
+if [ -f venv/bin/activate ]; then
+    source venv/bin/activate
+    pip install --upgrade pip
+    pip install -r requirements.txt
+    # Überprüfen, ob die Installation erfolgreich war
+    if [ $? -ne 0 ]; then
+        echo "WARNUNG: Einige Abhängigkeiten konnten nicht installiert werden."
+        echo "Sie können die Installation manuell durchführen mit:"
+        echo "cd /usr/local/bin/music-theory-ai && source venv/bin/activate && pip install -r requirements.txt"
+    fi
+else
+    echo "FEHLER: Die virtuelle Umgebung konnte nicht erstellt werden."
+    echo "Versuche Python-Pakete global zu installieren..."
+    pip3 install -r requirements.txt
+fi
 
 # API-Schlüssel abfragen und speichern
 echo "---------------------------------------"
@@ -177,8 +207,31 @@ mkdir -p "\$HOME/.music-theory-ai/saved_sessions"
 
 # Starte die Anwendung
 cd /usr/local/bin/music-theory-ai
-source venv/bin/activate
-python3 first_ai.py "\$@"
+
+# Prüfe, ob virtuelle Umgebung existiert und aktivierbar ist
+if [ -f venv/bin/activate ]; then
+    echo "Aktiviere virtuelle Python-Umgebung..."
+    source venv/bin/activate
+    echo "Starte Music Theory AI Assistant..."
+    python3 first_ai.py "\$@"
+else
+    echo "Warnung: Virtuelle Python-Umgebung nicht gefunden."
+    echo "Versuche, die Anwendung mit system-weitem Python zu starten..."
+    python3 first_ai.py "\$@"
+    
+    # Falls das fehlschlägt, gib Hilfestellung
+    if [ $? -ne 0 ]; then
+        echo
+        echo "FEHLER: Die Anwendung konnte nicht gestartet werden."
+        echo "Bitte stellen Sie sicher, dass alle erforderlichen Python-Module installiert sind:"
+        echo "sudo pip3 install -r /usr/local/bin/music-theory-ai/requirements.txt"
+        echo
+        echo "Oder reparieren Sie die virtuelle Umgebung mit:"
+        echo "sudo rm -rf /usr/local/bin/music-theory-ai/venv"
+        echo "cd /usr/local/bin/music-theory-ai && sudo python3 -m venv venv"
+        echo "cd /usr/local/bin/music-theory-ai && sudo -H venv/bin/pip install -r requirements.txt"
+    fi
+fi
 EOSCRIPT
 
 chmod 755 /usr/local/bin/music-theory-ai
