@@ -263,8 +263,22 @@ ensure_dependencies() {
     
     # Prüfe, ob pyaudio installiert ist
     python3 -c "import pyaudio" 2>/dev/null || {
-        echo "Installiere PyAudio..."
-        sudo apt-get update && sudo apt-get install -y python3-pyaudio
+        echo "PyAudio nicht gefunden."
+        
+        # Erkläre die Situation und biete Optionen an
+        echo "PyAudio wird für Audio-Funktionalität benötigt."
+        echo "Optionen zur Installation:"
+        echo "1) Ausführen: pip3 install --user PyAudio"
+        echo "2) Falls das nicht funktioniert, Installation mit dem Paketmanager:"
+        echo "   sudo apt-get install python3-pyaudio"
+        
+        # Versuche pip Installation als Benutzer (ohne sudo) 
+        echo "Versuche PyAudio als Benutzerpaket zu installieren..."
+        pip3 install --user PyAudio || {
+            echo "Installation über pip nicht erfolgreich."
+            echo "Bitte führen Sie manuell folgenden Befehl aus:"
+            echo "sudo apt-get install python3-pyaudio"
+        }
     }
     
     # Prüfe auf json-Modul (erforderlich für die Anwendung)
