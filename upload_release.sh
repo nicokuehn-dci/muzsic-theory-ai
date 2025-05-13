@@ -2,8 +2,8 @@
 # filepath: upload_release.sh
 
 VERSION="1.0.0"
-GITHUB_USER="nico-kuehn-dci"
-REPO="music-theory-ai"
+GITHUB_USER="nicokuehn-dci"
+REPO="muzsic-theory-ai"
 
 echo "Bereite Release v$VERSION für den Upload vor..."
 echo "Stellen Sie sicher, dass Sie ein GitHub Personal Access Token haben."
