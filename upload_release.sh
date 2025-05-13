@@ -6,11 +6,18 @@ GITHUB_USER="nicokuehn-dci"
 REPO="muzsic-theory-ai"
 
 echo "Bereite Release v$VERSION für den Upload vor..."
-echo "Stellen Sie sicher, dass Sie ein GitHub Personal Access Token haben."
-echo "Sie können eines erstellen unter: https://github.com/settings/tokens"
-
-read -p "GitHub Personal Access Token: " GITHUB_TOKEN
+echo "Stellen Sie sicher, dass Sie ein GitHub Personal Access Token mit den folgenden Berechtigungen haben:"
+echo "- 'repo' (vollständiger Zugriff auf Repositories)"
+echo "- 'write:packages' (für Paket-Uploads)"
+echo "Sie können eines erstellen unter: https://github.com/settings/tokens/new"
+echo "Hinweis: Wählen Sie mindestens 'repo' und 'write:packages' Berechtigungen!"
 echo
+
+# Check if token is provided via environment variable
+if [ -z "$GITHUB_TOKEN" ]; then
+    read -p "GitHub Personal Access Token: " GITHUB_TOKEN
+    echo
+fi
 
 if [ -z "$GITHUB_TOKEN" ]; then
     echo "Token erforderlich. Abbruch."
