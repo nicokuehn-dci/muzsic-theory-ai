@@ -11,7 +11,7 @@ mkdir -p music-theory-ai/etc/music-theory-ai
 
 # Kopiere Anwendungsdateien
 echo "Kopiere Anwendungsdateien..."
-cp first_ai.py music_notation.py prompt_manager.py topic_manager.py system_prompts.json requirements.txt setup.sh music-theory-ai/usr/local/bin/music-theory-ai/
+cp first_ai.py music_notation.py prompt_manager.py topic_manager.py system_prompts.json requirements.txt setup.sh compat_layer.py music-theory-ai/usr/local/bin/music-theory-ai/
 
 # Erstelle Verzeichnisse für Daten
 mkdir -p music-theory-ai/usr/local/bin/music-theory-ai/saved_chats
@@ -84,25 +84,44 @@ if [ -f venv/bin/activate ]; then
     source venv/bin/activate
     pip install --upgrade pip
     
-    # Installiere playsound separat mit einer bekannten funktionierenden Version
-    echo "Installiere playsound 1.2.2 (stabile Version)..."
-    pip install playsound==1.2.2
+    # Python-Version prüfen (für spezifische Anpassungen)
+    PYTHON_VERSION=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
+    echo "Python-Version: $PYTHON_VERSION"
+    
+    # Bekannte problematische Pakete direkt installieren
+    echo "Installiere bekannte problematische Pakete separat..."
+    pip install --no-build-isolation playsound==1.2.2
+    
+    # Für Python 3.13+ werden bestimmte Pakete ohne Build-Isolation installiert
+    if [[ "$PYTHON_VERSION" == "3.13"* ]]; then
+        echo "Python 3.13 erkannt - verwende spezielle Installation für kompatible Pakete..."
+        pip install --no-build-isolation requests pyttsx3 SpeechRecognition
+        
+        # PyAudio über apt installieren statt über pip
+        echo "Installiere PyAudio über apt..."
+        apt-get update
+        apt-get install -y python3-pyaudio
+    fi
     
     # Installiere die übrigen Abhängigkeiten
     echo "Installiere übrige Abhängigkeiten..."
     # Versuche Installation mit Fehlerbehandlung
-    if ! pip install -r requirements.txt; then
+    if ! pip install --upgrade --no-build-isolation -r requirements.txt; then
         echo "WARNUNG: Einige Abhängigkeiten konnten nicht installiert werden."
         echo "Versuche alternative Installation der problematischen Pakete..."
         
         # Problematische Pakete einzeln installieren
-        pip install groq python-dotenv fpdf python-docx rich pyttsx3 SpeechRecognition requests
+        pip install --no-build-isolation groq python-dotenv fpdf python-docx rich
+        
+        echo "Versuche Installation des Groq API-Clients über git..."
+        pip install --no-build-isolation git+https://github.com/groq/groq-python.git
         
         # Direkte Installation von PyAudio über apt
+        apt-get update
         apt-get install -y python3-pyaudio
         
         echo "Sie können fehlende Pakete auch manuell nachinstallieren mit:"
-        echo "cd /usr/local/bin/music-theory-ai && source venv/bin/activate && pip install -r requirements.txt"
+        echo "cd /usr/local/bin/music-theory-ai && source venv/bin/activate && pip install --no-build-isolation -r requirements.txt"
     fi
 else
     echo "FEHLER: Die virtuelle Umgebung konnte nicht erstellt werden."
@@ -226,16 +245,31 @@ cd /usr/local/bin/music-theory-ai
 ensure_dependencies() {
     echo "Stelle sicher, dass alle notwendigen Abhängigkeiten installiert sind..."
     
-    # Installiere grundlegende Abhängigkeiten
-    pip3 install --user groq python-dotenv rich
+    # Python-Version prüfen
+    PYTHON_VERSION=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
+    echo "Python-Version: $PYTHON_VERSION"
+    
+    # Installiere grundlegende Abhängigkeiten mit --no-build-isolation für bessere Kompatibilität
+    pip3 install --user --no-build-isolation groq python-dotenv rich
+    
+    # Für Python 3.13+, Groq direkt von GitHub installieren
+    if [[ "$PYTHON_VERSION" == "3.13"* ]]; then
+        echo "Python 3.13 erkannt - verwende GitHub-Version von groq..."
+        pip3 install --user --no-build-isolation git+https://github.com/groq/groq-python.git
+    fi
     
     # Playsound in einer funktionierenden Version
-    pip3 install --user playsound==1.2.2
+    pip3 install --user --no-build-isolation playsound==1.2.2
     
     # Prüfe, ob pyaudio installiert ist
     python3 -c "import pyaudio" 2>/dev/null || {
         echo "Installiere PyAudio..."
         sudo apt-get update && sudo apt-get install -y python3-pyaudio
+    }
+    
+    # Prüfe auf json-Modul (erforderlich für die Anwendung)
+    python3 -c "import json" 2>/dev/null || {
+        echo "WARNUNG: json-Modul nicht verfügbar."
     }
 }
 

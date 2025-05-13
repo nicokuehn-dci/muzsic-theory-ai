@@ -1,21 +1,58 @@
 #!/usr/bin/env python3
 # filepath: /home/nico-kuehn-dci/Desktop/lectures/first_ai/first_ai.py
-# Ensure the required library is installed or replace with a valid library
+
+# Check Python compatibility first
+import sys
+import warnings
+
+try:
+    # Try to import our compatibility layer
+    from compat_layer import warn_about_compatibility
+    # Warn about any compatibility issues
+    is_compatible = warn_about_compatibility()
+    if not is_compatible:
+        warnings.warn("Critical compatibility issues detected. Some features may not work.")
+except ImportError:
+    warnings.warn("Compatibility layer not available. Proceeding without compatibility checks.")
+
+# Standard library imports
 import re
-import groq
 import os
 import datetime
 import time
-from dotenv import load_dotenv
-from fpdf import FPDF
-from docx import Document
-from rich.console import Console
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn
-from rich.panel import Panel
-from rich.table import Table
-from rich import box
-from rich.markdown import Markdown
+import json
 from pathlib import Path
+
+# Try to import groq - handle import errors for different Python versions
+try:
+    import groq
+except ImportError:
+    warnings.warn("Failed to import groq module. Attempting alternative imports...")
+    try:
+        # Try to import from a different location
+        import site
+        site_packages = site.getsitepackages()[0]
+        sys.path.append(site_packages)
+        import groq
+    except ImportError:
+        print("ERROR: Could not import groq module. API functionality will not work.")
+        print("Try installing groq with: pip install --no-build-isolation groq==0.24.0")
+        groq = None
+
+# Other dependencies
+try:
+    from dotenv import load_dotenv
+    from fpdf import FPDF
+    from docx import Document
+    from rich.console import Console
+    from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn
+    from rich.panel import Panel
+    from rich.table import Table
+    from rich import box
+    from rich.markdown import Markdown
+except ImportError as e:
+    print(f"Error importing dependency: {e}")
+    print("Some features may not be available.")
 
 # Import API configuration
 try:

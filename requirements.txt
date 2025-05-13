@@ -1,17 +1,17 @@
 # filepath: /home/nico-kuehn-dci/Desktop/lectures/first_ai/requirements.txt
-# Core dependencies
-groq>=0.5.0
+# Core dependencies - with version constraints for Python 3.13 compatibility
+groq>=0.5.0,<=0.24.0  # Specific version constraint for compatibility
 python-dotenv>=1.0.0
 fpdf>=1.7.2
 python-docx>=0.8.11
 rich>=13.4.2
 
-# Voice interaction dependencies
+# Voice interaction dependencies - with version constraints for compatibility
 pyttsx3>=2.90
 SpeechRecognition>=3.10.0
-PyAudio>=0.2.13
-requests>=2.31.0
-playsound==1.2.2
+# PyAudio is installed via apt for better compatibility
+requests>=2.31.0,<=2.32.3
+playsound==1.2.2  # Fixed version for better compatibility
 
 # Music notation dependencies
 music21>=8.3.0
