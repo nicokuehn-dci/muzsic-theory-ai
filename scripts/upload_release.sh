@@ -56,3 +56,4 @@ echo "https://github.com/$GITHUB_USER/$REPO/releases/tag/v$VERSION"
 echo
 echo "Debian-Paket kann mit folgender URL heruntergeladen werden:"
 echo "https://github.com/$GITHUB_USER/$REPO/releases/download/v$VERSION/music-theory-ai_${VERSION}_all.deb"
+echo

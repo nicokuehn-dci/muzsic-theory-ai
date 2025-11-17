@@ -178,33 +178,7 @@ view_history() {
 
 # Function to create/switch branch
 manage_branches() {
-    echo -e "\n🌿 Current branch: $(git branch --show-current)"
-    echo -e "\nAvailable branches:"
-    git branch
-    
-    echo -e "\n1. Create new branch"
-    echo "2. Switch to existing branch"
-    echo "3. Return to main menu"
-    echo -n "Enter your choice: "
-    read branch_choice
-    
-    case $branch_choice in
-        1)
-            echo "Enter new branch name:"
-            read new_branch
-            git checkout -b "$new_branch"
-            echo "✅ Created and switched to new branch '$new_branch'"
-            ;;
-        2)
-            echo "Enter branch name to switch to:"
-            read target_branch
-            git checkout "$target_branch"
-            echo "✅ Switched to branch '$target_branch'"
-            ;;
-        *)
-            return
-            ;;
-    esac
+    echo -e "\n🌿 Current branch: $(git.branch --show-current)"
 }
 
 # Main menu loop

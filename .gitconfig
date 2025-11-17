@@ -1,0 +1,18 @@
+[user]
+    name = Your Name
+    email = you@example.com
+
+[core]
+    editor = code --wait
+
+[pull]
+    rebase = true
+
+[alias]
+    st = status
+    co = checkout
+    br = branch
+    cm = commit
+    lg = log --oneline --graph --decorate --all
+
+# Repository-local Git config template. Replace name/email above.

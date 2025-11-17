@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# filepath: /home/nico-kuehn-dci/Desktop/portfolio/first_ai/compat_layer.py
 """
 Compatibility layer for Python 3.13 and newer versions.
 This script helps handle potential incompatibilities between different Python versions.

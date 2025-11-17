@@ -1,6 +1,7 @@
 # filepath: /home/nico-kuehn-dci/Desktop/lectures/first_ai/requirements.txt
 # Core dependencies - with version constraints for Python 3.13 compatibility
-groq>=0.5.0,<=0.24.0  # Specific version constraint for compatibility
+# NOTE: original constraint was inconsistent. Keep a permissive lower bound.
+groq>=0.5.0
 python-dotenv>=1.0.0
 fpdf>=1.7.2
 python-docx>=0.8.11

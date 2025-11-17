@@ -142,12 +142,12 @@ while true; do
     echo -n "Bitte geben Sie Ihren Groq API-Schlüssel ein (oder 'später' zum Überspringen): "
     read -r API_KEY
     
-    if [ "\$API_KEY" = "später" ]; then
+    if [ "$API_KEY" = "später" ]; then
         echo "Sie können den API-Schlüssel später mit dem Befehl 'music-theory-ai-config' einrichten."
         break
     fi
     
-    if [ -z "\$API_KEY" ]; then
+    if [ -z "$API_KEY" ]; then
         echo "Der API-Schlüssel darf nicht leer sein. Bitte versuchen Sie es erneut."
         continue
     fi
@@ -157,7 +157,7 @@ while true; do
     if python3 -c "
 import requests
 try:
-    headers = {'Authorization': f'Bearer \$API_KEY'}
+    headers = {'Authorization': f'Bearer $API_KEY'}
     response = requests.get('https://api.groq.com/v1/models', headers=headers)
     if response.status_code == 200:
         print('API-Schlüssel ist gültig')
@@ -171,14 +171,14 @@ except Exception as e:
 " &> /dev/null; then
         echo "API-Schlüssel wurde validiert."
         # Speichere in einer Konfigurationsdatei
-        echo "{\"api_key\": \"\$API_KEY\"}" > /etc/music-theory-ai/config.json
+        echo "{\"api_key\": \"$API_KEY\"}" > /etc/music-theory-ai/config.json
         chmod 600 /etc/music-theory-ai/config.json
         break
     else
         echo "Der API-Schlüssel konnte nicht validiert werden. Bitte überprüfen Sie den Schlüssel."
         echo "Möchten Sie es erneut versuchen? (j/n)"
         read -r RETRY
-        if [ "\$RETRY" != "j" ]; then
+        if [ "$RETRY" != "j" ]; then
             echo "Sie können den API-Schlüssel später mit dem Befehl 'music-theory-ai-config' einrichten."
             break
         fi
@@ -196,16 +196,16 @@ function configure_api_key() {
     echo -n "Geben Sie Ihren Groq API-Schlüssel ein: "
     read -r API_KEY
     
-    if [ -z "\$API_KEY" ]; then
+    if [ -z "$API_KEY" ]; then
         echo "Der API-Schlüssel darf nicht leer sein."
         return 1
     fi
     
     # Für den Benutzer speichern
-    mkdir -p "\$HOME/.config/music-theory-ai"
-    echo "{\"api_key\": \"\$API_KEY\"}" > "\$HOME/.config/music-theory-ai/config.json"
-    chmod 600 "\$HOME/.config/music-theory-ai/config.json"
-    echo "API-Schlüssel wurde in \$HOME/.config/music-theory-ai/config.json gespeichert."
+    mkdir -p "$HOME/.config/music-theory-ai"
+    echo "{\"api_key\": \"$API_KEY\"}" > "$HOME/.config/music-theory-ai/config.json"
+    chmod 600 "$HOME/.config/music-theory-ai/config.json"
+    echo "API-Schlüssel wurde in $HOME/.config/music-theory-ai/config.json gespeichert."
 }
 
 # Hauptmenü
@@ -216,7 +216,7 @@ echo "2) Beenden"
 echo -n "Auswahl: "
 read -r CHOICE
 
-case \$CHOICE in
+case $CHOICE in
     1) configure_api_key ;;
     *) echo "Beenden." ;;
 esac
@@ -229,14 +229,14 @@ cat > /usr/local/bin/music-theory-ai << 'EOSCRIPT'
 #!/bin/bash
 
 # Prüfe, ob API-Schlüssel existiert
-if [ ! -f "\$HOME/.config/music-theory-ai/config.json" ] && [ ! -f "/etc/music-theory-ai/config.json" ]; then
+if [ ! -f "$HOME/.config/music-theory-ai/config.json" ] && [ ! -f "/etc/music-theory-ai/config.json" ]; then
     echo "Kein API-Schlüssel gefunden. Starte Konfigurationsassistenten..."
     music-theory-ai-config
 fi
 
 # Benutzerverzeichnis einrichten
-mkdir -p "\$HOME/.music-theory-ai/saved_chats"
-mkdir -p "\$HOME/.music-theory-ai/saved_sessions"
+mkdir -p "$HOME/.music-theory-ai/saved_chats"
+mkdir -p "$HOME/.music-theory-ai/saved_sessions"
 
 # Starte die Anwendung
 cd /usr/local/bin/music-theory-ai
@@ -292,12 +292,12 @@ if [ -f venv/bin/activate ]; then
     echo "Aktiviere virtuelle Python-Umgebung..."
     source venv/bin/activate
     echo "Starte Music Theory AI Assistant..."
-    python3 first_ai.py "\$@" || {
+    python3 first_ai.py "$@" || {
         echo "Fehler beim Starten der Anwendung in der virtuellen Umgebung."
         echo "Versuche Installation fehlender Abhängigkeiten..."
         ensure_dependencies
         echo "Versuche erneut mit system-weitem Python..."
-        python3 first_ai.py "\$@"
+        python3 first_ai.py "$@"
     }
 else
     echo "Warnung: Virtuelle Python-Umgebung nicht gefunden."
@@ -307,7 +307,7 @@ else
     ensure_dependencies
     
     # Starte die Anwendung
-    python3 first_ai.py "\$@"
+    python3 first_ai.py "$@"
     
     # Falls das fehlschlägt, gib Hilfestellung
     if [ $? -ne 0 ]; then
@@ -398,44 +398,4 @@ echo "Entferne Music Theory AI Assistant..."
 # Lösche generierte Skripte
 rm -f /usr/local/bin/music-theory-ai
 rm -f /usr/local/bin/music-theory-ai-config
-
-# Systemweite Konfiguration bleibt erhalten, falls der Benutzer sie behalten möchte
-echo "Hinweis: Benutzerdaten in ~/.music-theory-ai/ und ~/.config/music-theory-ai/ bleiben erhalten."
-echo "Wenn Sie diese löschen möchten, führen Sie aus:"
-echo "rm -rf ~/.music-theory-ai/ ~/.config/music-theory-ai/"
-
-exit 0
 EOL
-
-chmod 755 music-theory-ai/DEBIAN/prerm
-
-# Copyright-Datei
-cat > music-theory-ai/usr/share/doc/music-theory-ai/copyright << EOL
-Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: Music Theory AI Assistant
-Upstream-Contact: Nico Kühn <nico.kuehn.dci@gmail.com>
-Source: https://github.com/nico-kuehn-dci/music-theory-ai
-
-Files: *
-Copyright: 2023-2025 Nico Kühn
-License: MIT
- Permission is hereby granted, free of charge, to any person obtaining a copy
- of this software and associated documentation files (the "Software"), to deal
- in the Software without restriction, including without limitation the rights
- to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- copies of the Software, and to permit persons to whom the Software is
- furnished to do so, subject to the following conditions:
- .
- The above copyright notice and this permission notice shall be included in all
- copies or substantial portions of the Software.
- .
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- SOFTWARE.
-EOL
-
-echo "Debian-Paket Struktur wurde erfolgreich erstellt!"

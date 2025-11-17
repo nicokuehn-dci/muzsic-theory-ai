@@ -15,7 +15,7 @@ def get_api_key():
             with open('.env', 'r') as f:
                 for line in f:
                     if line.strip().startswith('GROQ_API_KEY='):
-                        return line.strip().split('=', 1)[1].strip(' \'"')
+                        return line.strip().split('=', 1)[1].strip(' \"\'')
         except:
             pass
     
